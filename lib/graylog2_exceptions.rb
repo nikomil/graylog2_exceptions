@@ -4,6 +4,7 @@ require 'socket'
 
 class Graylog2Exceptions
   attr_reader :args
+  attr_reader :custom_attributes
 
   def initialize(app, args = {})
     standard_args = {
@@ -14,6 +15,14 @@ class Graylog2Exceptions
       :max_chunk_size => 'LAN',
       :level => 3
     }
+
+    # Move extra arguments to separate hash
+    @custom_attributes = {}
+    args.each_key do |key|
+        if not standard_args.has_key?(key) then
+            @custom_attributes[key] = args.delete(key)
+        end
+    end
 
     @args = standard_args.merge(args)
     @app = app
@@ -39,16 +48,16 @@ class Graylog2Exceptions
 
   def send_to_graylog2 err
     begin
-      notifier = GELF::Notifier.new(@args.delete(:hostname), @args.delete(:port), @args.delete(:max_chunk_size))
+      notifier = GELF::Notifier.new(@args[:hostname], @args[:port], @args[:max_chunk_size])
       notifier.notify!({
 				:short_message => err.message,
         :full_message => err.backtrace.join("\n"),
-        :facility => @args.delete(:facility),
-        :level => @args.delete(:level),
-        :host => @args.delete(:local_app_name),
+        :facility => @args[:facility],
+        :level => @args[:level],
+        :host => @args[:local_app_name],
         :file => err.backtrace[0].split(":")[0],
         :line => err.backtrace[0].split(":")[1],
-			}.merge(@args))
+			}.merge(@custom_attributes))
     rescue => i_err
       puts "Graylog2 Exception logger. Could not send message: " + i_err.message
     end

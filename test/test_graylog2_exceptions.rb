@@ -26,8 +26,8 @@ class TestGraylog2Exceptions < Test::Unit::TestCase
   def test_add_custom_attributes_to_parameters
     c = Graylog2Exceptions.new(nil, {:_app => "my_awesome_app", :_rails_env => "staging"})
     
-		assert_equal "my_awesome_app", c.args[:_app]
-		assert_equal "staging", c.args[:_rails_env]
+		assert_equal "my_awesome_app", c.custom_attributes[:_app]
+		assert_equal "staging", c.custom_attributes[:_rails_env]
   end
 
   def test_correct_parameters_when_not_custom_set
